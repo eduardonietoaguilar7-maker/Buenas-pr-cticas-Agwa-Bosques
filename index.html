@@ -799,6 +799,7 @@ function renderStage() {
 
   el.querySelectorAll(".answer-area").forEach(t=>t.addEventListener("input",e=>{
     answers[+e.target.dataset.s][+e.target.dataset.qi]=e.target.value;
+    saveState();
     renderTabs();
   }));
   el.querySelectorAll(".score-dot").forEach(dot=>dot.addEventListener("click",e=>{
@@ -812,7 +813,6 @@ function renderStage() {
   el.querySelectorAll(".driver-input").forEach(inp=>inp.addEventListener("input",e=>{
     drivers[+e.target.dataset.s][e.target.dataset.t][+e.target.dataset.i]=e.target.value;
     saveState();
-      saveState();
   }));
 
   const btnP=document.getElementById("btn-prev");
