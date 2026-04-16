@@ -4,6 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tablero de Buenas Gestiones — AGWA Bosques</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQsxk4GHUWNdT3TIJc2VS9g-FrGQeFWyE",
+    authDomain: "tablero-agwa.firebaseapp.com",
+    projectId: "tablero-agwa",
+    storageBucket: "tablero-agwa.firebasestorage.app",
+    messagingSenderId: "396224977423",
+    appId: "1:396224977423:web:3af2758c446d112933a17a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const DOC_REF = doc(db, "tablero", "agwa_bosques");
+
+  // Exponer funciones al scope global
+  window._fbSave = async function(data) {
+    try {
+      await setDoc(DOC_REF, data, { merge: true });
+    } catch(e) { console.error("Firebase save error:", e); }
+  };
+
+  window._fbLoad = async function() {
+    try {
+      const snap = await getDoc(DOC_REF);
+      return snap.exists() ? snap.data() : null;
+    } catch(e) { console.error("Firebase load error:", e); return null; }
+  };
+
+  // Señal de que Firebase está listo
+  window._fbReady = true;
+  window.dispatchEvent(new Event("fb-ready"));
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -435,7 +470,8 @@ body {
 <body>
 <div class="app-wrap">
 
-  <div class="header">
+  <div id="sync-status" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;text-align:center;padding:8px 16px;font-size:13px;font-family:DM Sans,sans-serif;border-bottom:1px solid;transition:all .3s"></div>
+<div class="header">
     <div class="header-left">
       <p class="brand">del parque · AGWA Bosques</p>
       <h1 class="title">Tablero de Buenas Gestiones</h1>
@@ -607,21 +643,58 @@ STAGES.forEach(s => {
 });
 
 // ── PERSISTENCIA ──
-const STORAGE_KEY = "tablero_agwa_v1";
+// ── FIREBASE SYNC ──
+let _saveTimeout = null;
+
 function saveState(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({answers,scores,drivers})); }catch(e){}
+  // Debounce: espera 800ms tras el último cambio para no saturar Firebase
+  clearTimeout(_saveTimeout);
+  _saveTimeout = setTimeout(async ()=>{
+    if(window._fbSave){
+      const payload = {
+        answers: JSON.parse(JSON.stringify(answers)),
+        scores:  JSON.parse(JSON.stringify(scores)),
+        drivers: JSON.parse(JSON.stringify(drivers)),
+        updated: new Date().toISOString()
+      };
+      await window._fbSave(payload);
+    }
+  }, 800);
 }
-function loadState(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ return null; }
+
+async function restoreFromFirebase(){
+  showSyncBanner("Cargando datos...", "loading");
+  const saved = window._fbLoad ? await window._fbLoad() : null;
+  if(saved){
+    if(saved.answers) Object.keys(saved.answers).forEach(k=>{ answers[+k]=saved.answers[k]; });
+    if(saved.scores)  Object.keys(saved.scores).forEach(k=>{  scores[+k]=saved.scores[k]; });
+    if(saved.drivers) Object.keys(saved.drivers).forEach(k=>{ drivers[+k]=saved.drivers[k]; });
+    showSyncBanner("Datos sincronizados ✓", "ok");
+  } else {
+    showSyncBanner("Nuevo tablero — listo para empezar", "ok");
+  }
+  render();
 }
-// Restaurar al abrir
-(function(){
-  const saved = loadState();
-  if(!saved) return;
-  if(saved.answers) Object.keys(saved.answers).forEach(k=>{ answers[+k]=saved.answers[k]; });
-  if(saved.scores)  Object.keys(saved.scores).forEach(k=>{  scores[+k]=saved.scores[k]; });
-  if(saved.drivers) Object.keys(saved.drivers).forEach(k=>{ drivers[+k]=saved.drivers[k]; });
-})();
+
+function showSyncBanner(msg, type){
+  const el = document.getElementById("sync-status");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.background = type==="loading" ? "#FEF6E4" : "#E4F5ED";
+  el.style.color = type==="loading" ? "#8A6010" : "#1A7A4A";
+  el.style.borderColor = type==="loading" ? "#F0D080" : "#A8DABC";
+  el.style.display = "block";
+  if(type==="ok") setTimeout(()=>{ el.style.display="none"; }, 2500);
+}
+
+// Esperar a que Firebase esté listo, luego cargar
+if(window._fbReady){
+  restoreFromFirebase();
+} else {
+  window.addEventListener("fb-ready", restoreFromFirebase);
+  // Timeout de seguridad: si Firebase no carga en 4s, renderizar igual
+  setTimeout(()=>{ if(!window._fbReady){ showSyncBanner("Sin conexión — modo local","loading"); render(); } }, 4000);
+}
 
 function updateProgress() {
   const pct = Math.round(((current+1)/STAGES.length)*100);
@@ -796,7 +869,7 @@ function showSummary() {
 
 function resetWorkshop() {
   // Sin confirm() para compatibilidad con file://
-  localStorage.removeItem(STORAGE_KEY);
+  if(window._fbSave) window._fbSave({answers:{},scores:{},drivers:{},updated:new Date().toISOString()});
   STAGES.forEach(s => {
     answers[s.id] = {};
     scores[s.id] = [0,0,0,0,0,0,0];
@@ -816,7 +889,7 @@ function render() {
   if(active) active.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
 }
 
-render();
+// render() se llama desde restoreFromFirebase()
 </script>
 </body>
 </html>
