@@ -4,40 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tablero de Buenas Gestiones — AGWA Bosques</title>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-  const firebaseConfig = {
+<!-- Firebase CDN (compatible, sin módulos) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  const _fbApp = firebase.initializeApp({
     apiKey: "AIzaSyDQsxk4GHUWNdT3TIJc2VS9g-FrGQeFWyE",
     authDomain: "tablero-agwa.firebaseapp.com",
     projectId: "tablero-agwa",
     storageBucket: "tablero-agwa.firebasestorage.app",
     messagingSenderId: "396224977423",
     appId: "1:396224977423:web:3af2758c446d112933a17a"
-  };
+  });
+  const _db = firebase.firestore();
+  const _docRef = _db.collection("tablero").doc("agwa_bosques");
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const DOC_REF = doc(db, "tablero", "agwa_bosques");
-
-  // Exponer funciones al scope global
   window._fbSave = async function(data) {
     try {
-      await setDoc(DOC_REF, data, { merge: true });
+      await _docRef.set(data, { merge: true });
+      console.log("Guardado en Firebase ✓");
     } catch(e) { console.error("Firebase save error:", e); }
   };
 
   window._fbLoad = async function() {
     try {
-      const snap = await getDoc(DOC_REF);
-      return snap.exists() ? snap.data() : null;
+      const snap = await _docRef.get();
+      return snap.exists ? snap.data() : null;
     } catch(e) { console.error("Firebase load error:", e); return null; }
   };
 
-  // Señal de que Firebase está listo
   window._fbReady = true;
-  window.dispatchEvent(new Event("fb-ready"));
 </script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -687,13 +683,12 @@ function showSyncBanner(msg, type){
   if(type==="ok") setTimeout(()=>{ el.style.display="none"; }, 2500);
 }
 
-// Esperar a que Firebase esté listo, luego cargar
-if(window._fbReady){
-  restoreFromFirebase();
+// Firebase ya está listo (cargado sincrónicamente arriba)
+// Llamar restore cuando el DOM esté listo
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", restoreFromFirebase);
 } else {
-  window.addEventListener("fb-ready", restoreFromFirebase);
-  // Timeout de seguridad: si Firebase no carga en 4s, renderizar igual
-  setTimeout(()=>{ if(!window._fbReady){ showSyncBanner("Sin conexión — modo local","loading"); render(); } }, 4000);
+  restoreFromFirebase();
 }
 
 function updateProgress() {
