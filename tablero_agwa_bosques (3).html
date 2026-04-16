@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero de Buenas Gestiones — AGWA Bosques</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #FAFAF8;
+  --surface: #FFFFFF;
+  --surface-2: #F4F3EF;
+  --border: rgba(0,0,0,0.1);
+  --border-md: rgba(0,0,0,0.18);
+  --text-1: #1A1A18;
+  --text-2: #5A5A56;
+  --text-3: #9A9A94;
+  --accent: #1A1A18;
+  --pm-bg: #E8F0FB;
+  --pm-text: #1A52A8;
+  --pm-border: #B5CEEE;
+  --cm-bg: #E4F5ED;
+  --cm-text: #1A7A4A;
+  --cm-border: #A8DABC;
+  --both-bg: #FEF6E4;
+  --both-text: #8A6010;
+  --both-border: #F0D080;
+  --si-bg: #E4F5ED;
+  --si-text: #1A7A4A;
+  --si-border: #A8DABC;
+  --no-bg: #FDECEA;
+  --no-text: #A8291A;
+  --no-border: #F0B0A8;
+  --dot-empty: #E0DFD8;
+  --dot-filled: #1A1A18;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04);
+}
+
+html { font-size: 15px; }
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 0;
+}
+
+.app-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+.header-left {}
+.brand {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1.2;
+}
+.subtitle {
+  font-size: 13.5px;
+  color: var(--text-2);
+  margin-top: 5px;
+}
+.progress-wrap { text-align: right; min-width: 190px; }
+.progress-label { font-size: 11px; color: var(--text-3); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.06em; }
+.progress-track { width: 190px; height: 3px; background: var(--border); border-radius: 2px; margin-left: auto; }
+.progress-fill { height: 3px; background: var(--text-1); border-radius: 2px; transition: width 0.35s ease; }
+.progress-count { font-size: 12px; color: var(--text-2); margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+/* ── TABS ── */
+.tabs-scroll {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.tabs-scroll::-webkit-scrollbar { height: 3px; }
+.tabs-scroll::-webkit-scrollbar-track { background: transparent; }
+.tabs-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.tab-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 13px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.13s;
+  min-width: 82px;
+  font-family: 'DM Sans', sans-serif;
+}
+.tab-btn:hover { background: var(--surface-2); border-color: var(--border-md); }
+.tab-btn.active {
+  background: var(--text-1);
+  border-color: var(--text-1);
+  box-shadow: var(--shadow-sm);
+}
+.tab-num { font-size: 10px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+.tab-btn.active .tab-num { color: rgba(255,255,255,0.5); }
+.tab-icon { font-size: 17px; line-height: 1; }
+.tab-name { font-size: 10.5px; color: var(--text-2); text-align: center; line-height: 1.25; font-weight: 400; }
+.tab-btn.active .tab-name { color: #FFFFFF; font-weight: 500; }
+.tab-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--dot-empty); transition: background 0.15s; }
+.tab-dot.filled { background: #6AAF85; }
+.tab-btn.active .tab-dot.filled { background: #7ECC9E; }
+.tab-btn.active .tab-dot { background: rgba(255,255,255,0.3); }
+
+/* ── STAGE HEADER ── */
+.stage-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.stage-icon-big { font-size: 30px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.stage-title { font-size: 18px; font-weight: 600; color: var(--text-1); margin-bottom: 5px; }
+.stage-desc { font-size: 13.5px; color: var(--text-2); line-height: 1.55; }
+.stage-tension {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+.tension-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-3); font-weight: 500; }
+
+/* ── LEGEND ── */
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.4rem;
+  flex-wrap: wrap;
+}
+.legend-chip {
+  font-size: 11.5px;
+  padding: 4px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  background: var(--surface);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.badge.pm { background: var(--pm-bg); color: var(--pm-text); border-color: var(--pm-border); }
+.badge.cm { background: var(--cm-bg); color: var(--cm-text); border-color: var(--cm-border); }
+.badge.ambas { background: var(--both-bg); color: var(--both-text); border-color: var(--both-border); }
+.legend-label { font-size: 12px; color: var(--text-2); margin-right: 4px; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-3);
+  margin-bottom: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* ── QUESTIONS ── */
+.questions-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+
+.question-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.3rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s;
+}
+.question-card:focus-within { border-color: var(--border-md); }
+.q-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 11px; }
+.q-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+  margin-top: 1px;
+}
+.q-meta { flex: 1; }
+.q-directed-row { margin-bottom: 5px; }
+.q-text { font-size: 14.5px; color: var(--text-1); font-weight: 500; line-height: 1.45; }
+.q-hint { font-size: 12.5px; color: var(--text-2); margin-top: 5px; line-height: 1.45; }
+.answer-area {
+  width: 100%;
+  min-height: 78px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 13px;
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-1);
+  background: var(--surface-2);
+  line-height: 1.5;
+  transition: border-color 0.15s, background 0.15s;
+  display: block;
+}
+.answer-area:focus { outline: none; border-color: var(--border-md); background: var(--surface); }
+.answer-area::placeholder { color: var(--text-3); }
+
+/* ── PILLARS ── */
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+.pillar-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 11px 10px 9px;
+  background: var(--surface);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.pillar-icon { font-size: 17px; margin-bottom: 4px; line-height: 1; }
+.pillar-name { font-size: 11px; color: var(--text-2); line-height: 1.3; font-weight: 400; }
+.pillar-score { display: flex; justify-content: center; gap: 3px; margin-top: 9px; }
+.score-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--border-md);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  background: var(--dot-empty);
+}
+.score-dot.filled { background: var(--dot-filled); border-color: var(--dot-filled); }
+.score-val { font-size: 12px; color: var(--text-1); font-weight: 500; margin-top: 5px; font-family: 'DM Mono', monospace; }
+
+/* ── DRIVERS ── */
+.drivers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+@media (max-width: 540px) { .drivers-grid { grid-template-columns: 1fr; } }
+.driver-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.2rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.driver-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.driver-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 9px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.driver-badge.si { background: var(--si-bg); color: var(--si-text); border-color: var(--si-border); }
+.driver-badge.no { background: var(--no-bg); color: var(--no-text); border-color: var(--no-border); }
+.driver-items { display: flex; flex-direction: column; gap: 7px; }
+.driver-item { display: flex; align-items: center; gap: 8px; }
+.driver-bullet { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--text-3); }
+.driver-input {
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 3px 4px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-1);
+  background: transparent;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.driver-input:focus { border-bottom-color: var(--border-md); }
+.driver-input::placeholder { color: var(--text-3); }
+
+/* ── NAV ── */
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+  gap: 1rem;
+}
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--border-md);
+  background: var(--surface);
+  color: var(--text-1);
+}
+.nav-btn:hover { background: var(--surface-2); }
+.nav-btn:disabled { opacity: 0.28; cursor: not-allowed; pointer-events: none; }
+.nav-btn.primary {
+  background: var(--text-1);
+  color: #FFFFFF;
+  border-color: var(--text-1);
+  box-shadow: var(--shadow-sm);
+}
+.nav-btn.primary:hover { opacity: 0.85; }
+.stage-indicator { font-size: 12.5px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+
+/* ── SUMMARY SCREEN ── */
+.summary-screen { display: none; }
+.summary-screen.visible { display: block; }
+.stage-content.hidden { display: none; }
+
+.summary-header {
+  text-align: center;
+  padding: 2rem 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+.summary-header .icon { font-size: 36px; margin-bottom: 0.75rem; }
+.summary-header h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.summary-header p { font-size: 13.5px; color: var(--text-2); }
+
+.summary-stage {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.summary-stage-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 10px;
+}
+.summary-answers { display: flex; flex-direction: column; gap: 8px; }
+.summary-q { font-size: 12.5px; }
+.summary-q-label { color: var(--text-3); font-weight: 500; display: block; margin-bottom: 2px; }
+.summary-q-text { color: var(--text-2); font-style: italic; display: block; }
+.summary-q-answer { color: var(--text-1); font-size: 13px; margin-top: 3px; padding: 7px 10px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.summary-empty { color: var(--text-3); font-size: 12px; font-style: italic; }
+
+.summary-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border-md);
+  background: var(--surface);
+  color: var(--text-1);
+  margin-top: 1.5rem;
+  transition: all 0.14s;
+}
+.summary-back:hover { background: var(--surface-2); }
+</style>
+</head>
+<body>
+<div class="app-wrap">
+
+  <div class="header">
+    <div class="header-left">
+      <p class="brand">del parque · AGWA Bosques</p>
+      <h1 class="title">Tablero de Buenas Gestiones</h1>
+      <p class="subtitle">Aprendizajes por etapa del ciclo de vida — Workshop PM + CM</p>
+    </div>
+    <div class="progress-wrap">
+      <p class="progress-label">Avance del workshop</p>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:10%"></div>
+      </div>
+      <p class="progress-count" id="progress-count">Etapa 1 de 10</p>
+    </div>
+  </div>
+
+  <div class="tabs-scroll" id="tabs-container"></div>
+
+  <div class="stage-content" id="stage-content"></div>
+
+  <div class="summary-screen" id="summary-screen">
+    <div class="summary-header">
+      <div class="icon">🌳</div>
+      <h2>Resumen del Workshop — AGWA Bosques</h2>
+      <p>Aprendizajes capturados por etapa del ciclo de vida del proyecto</p>
+    </div>
+    <div id="summary-body"></div>
+    <button class="summary-back" id="btn-back-workshop">← Volver al workshop</button>
+      <button class="summary-back" onclick="resetWorkshop()" style="margin-left:12px;color:var(--no-text);border-color:var(--no-border)">🗑 Limpiar todo</button>
+  </div>
+
+</div>
+
+<script>
+const STAGES = [
+  {
+    id:0, icon:"📋", num:"01", name:"Pre-entrega",
+    desc:"Obra avanzada, expectativas activas. El proyecto existe en papel y en la mente de los compradores, pero no en la experiencia.",
+    tension:"Expectativas vs. realidad del producto final",
+    questions:[
+      {q:"¿Cómo fue el proceso de comunicación con los compradores antes de la entrega?", hint:"Frecuencia, canales, calidad de la información compartida.", role:"pm"},
+      {q:"¿Qué expectativas traían los compradores que no correspondían al producto real?", hint:"Acabados, amenidades, tamaño de áreas comunes, obra exterior.", role:"ambas"},
+      {q:"¿Existía un reglamento de condominio listo antes de la primera entrega?", hint:"¿Se comunicó antes de escriturar? ¿Generó preguntas o conflictos?", role:"pm"},
+      {q:"¿Cómo se gestionó la relación con compradores de etapas tempranas que vivieron cambios en el proyecto?", hint:"Ajustes de diseño, cambios de fechas, modificaciones de amenidades.", role:"pm"}
+    ],
+    pillars:[1,1,0,0,1,0,0]
+  },
+  {
+    id:1, icon:"🏠", num:"02", name:"Primeras entregas",
+    desc:"Los primeros residentes llegan. La comunidad nace entre cajones de cartón, obras pendientes y mucha expectativa.",
+    tension:"Onboarding masivo + comunidad naciente",
+    questions:[
+      {q:"¿Cómo fue el proceso de entrega de unidades? ¿Hubo un protocolo de bienvenida?", hint:"Check-list de entrega, presentación de amenidades, manual del residente.", role:"pm"},
+      {q:"¿Qué tan preparada estaba la administración para recibir a los primeros residentes?", hint:"Personal, plataforma tecnológica, reglamento, sistema de accesos.", role:"pm"},
+      {q:"¿Cuál fue la primera queja o conflicto que surgió y cómo se atendió?", hint:"Esto revela las prioridades reales de la comunidad temprana.", role:"ambas"},
+      {q:"¿Cómo se presentó Del Parque ante los primeros residentes como desarrollador presente?", hint:"¿Hubo un rol activo del desarrollador o se dejó todo a la administración?", role:"cm"}
+    ],
+    pillars:[1,0,1,1,1,0,0]
+  },
+  {
+    id:2, icon:"🏗️", num:"03", name:"Habitantes con obra",
+    desc:"Residentes viviendo mientras la construcción sigue activa. La convivencia entre ambos mundos es el reto más complejo de esta etapa.",
+    tension:"Fricción seguridad/construcción + primeros conflictos",
+    questions:[
+      {q:"¿Qué protocolos existían para gestionar la coexistencia entre residentes y obra?", hint:"Horarios, accesos diferenciados, comunicación de avances, ruido.", role:"pm"},
+      {q:"¿Cuál fue el principal punto de conflicto entre obra y residentes? ¿Cómo se resolvió?", hint:"Polvo, ruido, estacionamiento de trabajadores, acceso a amenidades.", role:"ambas"},
+      {q:"¿Cómo se comunicaban los avances y fechas de término de obra a los residentes?", hint:"Frecuencia, canal, quién firmaba la comunicación.", role:"cm"},
+      {q:"¿En qué momento los residentes sintieron que 'ya era su casa' a pesar de la obra?", hint:"¿Hubo un evento, una comunicación o un hito que marcó ese cambio?", role:"cm"}
+    ],
+    pillars:[1,0,0,1,1,0,0]
+  },
+  {
+    id:3, icon:"✅", num:"04", name:"Término de obra",
+    desc:"La obra concluye y el proyecto se consolida. El momento de mayor potencial para fortalecer la identidad de la comunidad.",
+    tension:"Transición desarrollador → comunidad autónoma",
+    questions:[
+      {q:"¿Hubo un evento que marcó el fin de obra? ¿Cómo se celebró con la comunidad?", hint:"Una inauguración, una comunicación especial, un recorrido.", role:"cm"},
+      {q:"¿Cómo fue la transición de responsabilidades del desarrollador hacia la administración?", hint:"Garantías, pendientes, fondo de mantenimiento, relación con el comité.", role:"pm"},
+      {q:"¿Qué pendientes de obra generaron mayor frustración en la comunidad?", hint:"Los que más tardaron en resolverse y el impacto que tuvieron.", role:"ambas"},
+      {q:"¿Cuál era el estado del comité vecinal al terminar la obra?", hint:"¿Ya estaba formado? ¿Era proactivo o reactivo? ¿Quiénes lo lideraban?", role:"ambas"}
+    ],
+    pillars:[1,0,1,1,1,1,0]
+  },
+  {
+    id:4, icon:"📄", num:"05", name:"Primeros contratos de renta",
+    desc:"El ecosistema mixto toma forma. Propietarios que rentan, inquilinos que llegan, la comunidad aprende a convivir con perfiles distintos.",
+    tension:"Screening de inquilinos + primer perfil mixto",
+    questions:[
+      {q:"¿Existía un proceso de evaluación o screening del inquilino antes de permitir la renta?", hint:"¿Lo hacía Del Parque, la administración, o quedaba en manos del propietario?", role:"pm"},
+      {q:"¿Cómo recibía la administración a los inquilinos nuevos? ¿Había un onboarding diferenciado?", hint:"¿Se entregaba el reglamento? ¿Se explicaban amenidades y accesos?", role:"cm"},
+      {q:"¿Qué diferencias notaron entre el comportamiento de propietarios e inquilinos?", hint:"Uso de amenidades, respeto al reglamento, participación en asambleas.", role:"ambas"},
+      {q:"¿Hubo tensiones tempranas entre propietarios-ocupantes e inquilinos?", hint:"Ruido, mascotas, estacionamiento, uso de espacios comunes.", role:"cm"}
+    ],
+    pillars:[1,1,1,0,1,0,1]
+  },
+  {
+    id:5, icon:"🔄", num:"06", name:"Renovaciones tempranas",
+    desc:"Primer ciclo de retención. Se descubren las razones reales por las que los inquilinos se quedan o se van.",
+    tension:"Retención vs. rotación + señales del precio real",
+    questions:[
+      {q:"¿Cuáles fueron las principales razones por las que los primeros inquilinos renovaron?", hint:"Satisfacción con el proyecto, comunidad, precio, ubicación.", role:"cm"},
+      {q:"¿Cuáles fueron las razones más frecuentes de no-renovación en esta etapa?", hint:"Precio, inconformidades con la administración, cambio de situación personal.", role:"pm"},
+      {q:"¿Cómo se gestionaron los incrementos de renta en las primeras renovaciones?", hint:"¿Hubo una política clara? ¿Generó conflictos? ¿Cómo reaccionó el mercado?", role:"pm"},
+      {q:"¿La rotación de inquilinos generó algún impacto visible en la comunidad?", hint:"Uso de amenidades, participación en eventos, dinámica del comité.", role:"cm"}
+    ],
+    pillars:[0,0,1,0,1,1,1]
+  },
+  {
+    id:6, icon:"⚖️", num:"07", name:"Alta escrituración + renovaciones",
+    desc:"Mucho movimiento simultáneo: propietarios escriturando, inquilinos renovando, el mercado presionando en ambas direcciones.",
+    tension:"Tensión oferta/demanda + inversionistas en el comité",
+    questions:[
+      {q:"¿Qué porcentaje aproximado de unidades estaba siendo rentado vs. ocupado por propietarios?", hint:"El ratio propietario-inquilino define la dinámica de gobernanza.", role:"pm"},
+      {q:"¿Cómo cambió el comité vecinal cuando aumentó la proporción de inversionistas?", hint:"¿Las decisiones del comité cambiaron de prioridades? ¿Hubo tensiones nuevas?", role:"ambas"},
+      {q:"¿Cómo afectó la alta escrituración a la administración del condominio?", hint:"Nuevos propietarios con dudas, cambios de admin de rentas, cuotas por regularizar.", role:"pm"},
+      {q:"¿Hubo momentos en que la identidad de la comunidad se sintió amenazada por el cambio de perfiles?", hint:"Eventos con menos asistencia, nuevas fricciones, menor participación.", role:"cm"}
+    ],
+    pillars:[1,0,1,1,1,1,1]
+  },
+  {
+    id:7, icon:"📉", num:"08", name:"Momento de alta oferta",
+    desc:"El mercado se saturó, los tiempos de vacancia subieron, el precio de renta tuvo que ajustarse.",
+    tension:"Presión a la baja en precios + riesgo de perfil de inquilino",
+    questions:[
+      {q:"¿A qué se debió el momento de alta oferta? ¿Fue interno o de mercado externo?", hint:"Nuevos proyectos en la zona, situación económica, estacionalidad, sobrestock.", role:"pm"},
+      {q:"¿Cómo respondió Del Parque desde la administración de rentas para mantener la ocupación?", hint:"Ajuste de precios, mejora de amenidades, incentivos a propietarios o inquilinos.", role:"pm"},
+      {q:"¿El exceso de oferta generó una caída en la calidad del perfil de inquilino?", hint:"¿Se relajó el screening? ¿Llegaron perfiles que no encajaban con la comunidad?", role:"ambas"},
+      {q:"¿Cómo vivió la comunidad este período? ¿Se notó en la satisfacción o convivencia?", hint:"Mayor rotación, menos sentido de pertenencia, mayor conflicto entre vecinos.", role:"cm"}
+    ],
+    pillars:[0,0,0,0,1,0,1]
+  },
+  {
+    id:8, icon:"📈", num:"09", name:"Momento de alta demanda",
+    desc:"El proyecto brilló. Tiempos de vacancia mínimos, precios al alza, el activo demostró su valor.",
+    tension:"Oportunidad de pricing + riesgo de sobre-rotación",
+    questions:[
+      {q:"¿Qué factores impulsaron el momento de alta demanda?", hint:"Nearshoring, nuevas empresas en la zona, estacionalidad, reputación del proyecto.", role:"pm"},
+      {q:"¿Cómo se capitalizó este momento desde la estrategia de rentas?", hint:"Incrementos de precio, mejoras a amenidades, comunicación activa del valor.", role:"pm"},
+      {q:"¿La alta demanda generó tensiones dentro de la comunidad?", hint:"Más rotación de inquilinos, llegada rápida de perfiles nuevos sin integración.", role:"cm"},
+      {q:"¿Qué aprendieron sobre cómo anticiparse a estos ciclos para aprovecharlos mejor?", hint:"Señales tempranas, canales de captación, timing de mejoras.", role:"ambas"}
+    ],
+    pillars:[0,0,0,0,1,0,1]
+  },
+  {
+    id:9, icon:"🌳", num:"10", name:"Comunidad madura",
+    desc:"AGWA Bosques hoy: una comunidad con identidad, historia y criterios propios para gobernarse.",
+    tension:"Autonomía real + administración profesional + identidad consolidada",
+    questions:[
+      {q:"¿En qué momento sintieron que AGWA Bosques ya tenía una identidad propia como comunidad?", hint:"Un evento, una crisis bien resuelta, una dinámica que se repite naturalmente.", role:"cm"},
+      {q:"¿Cuál es hoy la mayor fortaleza de AGWA Bosques como comunidad?", hint:"Lo que no cambiarían y que recomendarían replicar en otros proyectos.", role:"ambas"},
+      {q:"¿Cuál es la decisión más importante que tomarían diferente si empezaran de nuevo?", hint:"El aprendizaje más honesto y valioso para los proyectos que vienen.", role:"ambas"},
+      {q:"Si tuvieran que escribir las 3 reglas de oro para la gestión comunitaria de un proyecto DDP, ¿cuáles serían?", hint:"Pensando en Empresalia, Up Santa Fe, Torre Reforma Ángel...", role:"ambas"}
+    ],
+    pillars:[1,1,1,1,1,1,1]
+  }
+];
+
+const PILLAR_NAMES = ["Amenidades","A&B","Social","Seguridad","Admin.","Comité","Rentas"];
+const PILLAR_ICONS = ["🏊","☕","🤝","🔒","🏢","👥","💰"];
+const ROLE_LABEL = { pm:"PM", cm:"CM", ambas:"Ambas" };
+const ROLE_CLASS = { pm:"pm", cm:"cm", ambas:"ambas" };
+
+let current = 0;
+const answers = {};
+const scores = {};
+const drivers = {};
+STAGES.forEach(s => {
+  answers[s.id] = {};
+  scores[s.id] = [0,0,0,0,0,0,0];
+  drivers[s.id] = {si:["","",""],no:["","",""]};
+});
+
+// ── PERSISTENCIA ──
+const STORAGE_KEY = "tablero_agwa_v1";
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({answers,scores,drivers})); }catch(e){}
+}
+function loadState(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ return null; }
+}
+// Restaurar al abrir
+(function(){
+  const saved = loadState();
+  if(!saved) return;
+  if(saved.answers) Object.keys(saved.answers).forEach(k=>{ answers[+k]=saved.answers[k]; });
+  if(saved.scores)  Object.keys(saved.scores).forEach(k=>{  scores[+k]=saved.scores[k]; });
+  if(saved.drivers) Object.keys(saved.drivers).forEach(k=>{ drivers[+k]=saved.drivers[k]; });
+})();
+
+function updateProgress() {
+  const pct = Math.round(((current+1)/STAGES.length)*100);
+  document.getElementById("progress-fill").style.width = pct+"%";
+  document.getElementById("progress-count").textContent = "Etapa "+(current+1)+" de "+STAGES.length;
+}
+
+function renderTabs() {
+  const c = document.getElementById("tabs-container");
+  c.innerHTML = "";
+  STAGES.forEach((s,i) => {
+    const hasAny = Object.values(answers[s.id]).some(v=>v&&v.trim());
+    const btn = document.createElement("button");
+    btn.className = "tab-btn"+(i===current?" active":"");
+    btn.innerHTML = `
+      <span class="tab-num">${s.num}</span>
+      <span class="tab-icon">${s.icon}</span>
+      <span class="tab-name">${s.name}</span>
+      <span class="tab-dot${hasAny?" filled":""}"></span>`;
+    btn.onclick = ()=>{ current=i; render(); };
+    c.appendChild(btn);
+  });
+}
+
+function renderStage() {
+  const s = STAGES[current];
+  const el = document.getElementById("stage-content");
+
+  const pillarsHTML = PILLAR_NAMES.map((name,pi)=>{
+    if(!s.pillars[pi]) return "";
+    const sc = scores[s.id][pi];
+    const dots = [1,2,3,4,5].map(v=>`<span class="score-dot${sc>=v?" filled":""}" data-s="${s.id}" data-pi="${pi}" data-v="${v}"></span>`).join("");
+    return `<div class="pillar-card">
+      <div class="pillar-icon">${PILLAR_ICONS[pi]}</div>
+      <div class="pillar-name">${name}</div>
+      <div class="pillar-score">${dots}</div>
+      <div class="score-val" id="sv-${s.id}-${pi}">${sc>0?sc+"/5":"—"}</div>
+    </div>`;
+  }).filter(Boolean).join("");
+
+  const questionsHTML = s.questions.map((q,qi)=>`
+    <div class="question-card">
+      <div class="q-header">
+        <div class="q-number">${qi+1}</div>
+        <div class="q-meta">
+          <div class="q-directed-row"><span class="badge ${ROLE_CLASS[q.role]}">${ROLE_LABEL[q.role]}</span></div>
+          <div class="q-text">${q.q}</div>
+          ${q.hint?`<div class="q-hint">${q.hint}</div>`:""}
+        </div>
+      </div>
+      <textarea class="answer-area" placeholder="Respuesta del workshop..." data-s="${s.id}" data-qi="${qi}">${answers[s.id][qi]||""}</textarea>
+    </div>`).join("");
+
+  const d = drivers[s.id];
+  const siRows = [0,1,2].map(i=>`<div class="driver-item"><span class="driver-bullet"></span><input class="driver-input" type="text" placeholder="Acción clave..." value="${d.si[i]||""}" data-s="${s.id}" data-t="si" data-i="${i}"></div>`).join("");
+  const noRows = [0,1,2].map(i=>`<div class="driver-item"><span class="driver-bullet"></span><input class="driver-input" type="text" placeholder="Qué evitar..." value="${d.no[i]||""}" data-s="${s.id}" data-t="no" data-i="${i}"></div>`).join("");
+
+  const isFirst = current===0, isLast = current===STAGES.length-1;
+
+  el.innerHTML = `
+    <div class="stage-header">
+      <div class="stage-icon-big">${s.icon}</div>
+      <div>
+        <div class="stage-title">Etapa ${s.num} — ${s.name}</div>
+        <div class="stage-desc">${s.desc}</div>
+        <div class="stage-tension">
+          <span class="tension-label">Tensión central</span>
+          ${s.tension}
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-row">
+      <span class="legend-chip">Workshop: PM + CM juntas</span>
+      <span class="badge pm">PM</span><span class="legend-label"> Project Manager</span>
+      <span class="badge cm">CM</span><span class="legend-label"> Community Manager</span>
+      <span class="badge ambas">Ambas</span><span class="legend-label"> reflexión conjunta</span>
+    </div>
+
+    <p class="section-label">Preguntas guiadas</p>
+    <div class="questions-grid">${questionsHTML}</div>
+
+    ${pillarsHTML?`
+      <p class="section-label">Pilares relevantes — calificación en esta etapa</p>
+      <div class="pillars-grid">${pillarsHTML}</div>
+    `:""}
+
+    <p class="section-label">Drivers del éxito en esta etapa</p>
+    <div class="drivers-grid">
+      <div class="driver-card">
+        <div class="driver-title">Los SÍ <span class="driver-badge si">Incentivar · Incorporar</span></div>
+        <div class="driver-items">${siRows}</div>
+      </div>
+      <div class="driver-card">
+        <div class="driver-title">Los NO <span class="driver-badge no">Evitar · Prevenir</span></div>
+        <div class="driver-items">${noRows}</div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="nav-btn" id="btn-prev" ${isFirst?"disabled":""}>← Anterior</button>
+      <span class="stage-indicator">${current+1} / ${STAGES.length}</span>
+      ${isLast
+        ?`<button class="nav-btn primary" id="btn-finish">Ver resumen →</button>`
+        :`<button class="nav-btn primary" id="btn-next">Siguiente →</button>`}
+    </div>`;
+
+  el.querySelectorAll(".answer-area").forEach(t=>t.addEventListener("input",e=>{
+    answers[+e.target.dataset.s][+e.target.dataset.qi]=e.target.value;
+    renderTabs();
+  }));
+  el.querySelectorAll(".score-dot").forEach(dot=>dot.addEventListener("click",e=>{
+    const sid=+e.target.dataset.s, pi=+e.target.dataset.pi, v=+e.target.dataset.v;
+    scores[sid][pi]=v;
+    saveState();
+    const sv=document.getElementById("sv-"+sid+"-"+pi);
+    if(sv) sv.textContent=v+"/5";
+    el.querySelectorAll(`.score-dot[data-s="${sid}"][data-pi="${pi}"]`).forEach(d=>d.classList.toggle("filled",+d.dataset.v<=v));
+  }));
+  el.querySelectorAll(".driver-input").forEach(inp=>inp.addEventListener("input",e=>{
+    drivers[+e.target.dataset.s][e.target.dataset.t][+e.target.dataset.i]=e.target.value;
+    saveState();
+      saveState();
+  }));
+
+  const btnP=document.getElementById("btn-prev");
+  const btnN=document.getElementById("btn-next");
+  const btnF=document.getElementById("btn-finish");
+  if(btnP) btnP.onclick=()=>{if(current>0){current--;render();}};
+  if(btnN) btnN.onclick=()=>{if(current<STAGES.length-1){current++;render();}};
+  if(btnF) btnF.onclick=()=>showSummary();
+}
+
+function showSummary() {
+  document.getElementById("stage-content").classList.add("hidden");
+  document.getElementById("tabs-container").style.display="none";
+  const summary = document.getElementById("summary-screen");
+  summary.classList.add("visible");
+
+  const body = document.getElementById("summary-body");
+  body.innerHTML = STAGES.map(s=>{
+    const answersHTML = s.questions.map((q,qi)=>{
+      const ans = answers[s.id][qi];
+      return `<div class="summary-q">
+        <span class="summary-q-label">${qi+1}. <span class="badge ${ROLE_CLASS[q.role]}" style="font-size:9px;padding:1px 7px;">${ROLE_LABEL[q.role]}</span></span>
+        <span class="summary-q-text">${q.q}</span>
+        ${ans&&ans.trim()?`<div class="summary-q-answer">${ans}</div>`:`<span class="summary-empty">Sin respuesta aún</span>`}
+      </div>`;
+    }).join("");
+
+    const dSi = drivers[s.id].si.filter(v=>v.trim());
+    const dNo = drivers[s.id].no.filter(v=>v.trim());
+    const driversHTML = (dSi.length||dNo.length)?`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div><p class="summary-q-label" style="margin-bottom:4px;">SÍ hacer</p>${dSi.length?dSi.map(v=>`<p style="font-size:12.5px;color:var(--text-2);">· ${v}</p>`).join(""):"<span class='summary-empty'>—</span>"}</div>
+        <div><p class="summary-q-label" style="margin-bottom:4px;">NO hacer</p>${dNo.length?dNo.map(v=>`<p style="font-size:12.5px;color:var(--text-2);">· ${v}</p>`).join(""):"<span class='summary-empty'>—</span>"}</div>
+      </div>`:"";
+
+    return `<div class="summary-stage">
+      <div class="summary-stage-title">${s.icon} Etapa ${s.num} — ${s.name}</div>
+      <div class="summary-answers">${answersHTML}</div>
+      ${driversHTML}
+    </div>`;
+  }).join("");
+
+  document.getElementById("btn-back-workshop").onclick=()=>{
+    summary.classList.remove("visible");
+    document.getElementById("stage-content").classList.remove("hidden");
+    document.getElementById("tabs-container").style.display="flex";
+  };
+}
+
+function resetWorkshop() {
+  // Sin confirm() para compatibilidad con file://
+  localStorage.removeItem(STORAGE_KEY);
+  STAGES.forEach(s => {
+    answers[s.id] = {};
+    scores[s.id] = [0,0,0,0,0,0,0];
+    drivers[s.id] = { si:["","",""], no:["","",""] };
+  });
+  current = 0;
+  document.getElementById("summary-screen").classList.remove("visible");
+  document.getElementById("stage-content").classList.remove("hidden");
+  render();
+}
+
+function render() {
+  renderTabs();
+  renderStage();
+  updateProgress();
+  const active = document.querySelector(".tab-btn.active");
+  if(active) active.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+}
+
+render();
+</script>
+</body>
+</html>
